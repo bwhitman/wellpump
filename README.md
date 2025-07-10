@@ -27,7 +27,7 @@ Plug the adapter into the Pi's USB port.
 Set up the Pi like normal. Install [minimalmodbus](https://minimalmodbus.readthedocs.io/en/stable/readme.html
 ) like `pip3 install minimalmodbus`. [Run this script](https://github.com/bwhitman/wellpump/blob/main/well.py) like `python3 well.py`. (I run mine in a `screen` and just keep it running all the time.) It will output a log file with a timestamp in milliseconds and the power of the pump in watts. 
 
-To see KW/H over hours or days, run `python3 analyze.py`. It's a simple script to convert the watts per timeslice from the log to joules and then KW/H. Modify that to your needs!
+To see KW/H over hours or days, run [`python3 analyze.py`](https://github.com/bwhitman/wellpump/blob/main/analyze.py). It's a simple script to convert the watts per timeslice from the log to joules and then KW/H. Modify that to your needs!
 
 ## Links, help
 

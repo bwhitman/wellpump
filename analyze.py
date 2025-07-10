@@ -27,28 +27,28 @@ for line in open(fn, "r").read().split("\n"):
 	log.append(line.split(' '))
 print("%d items in %s"%  (len(log), fn))
 
-joules_sum_days = {}
-joules_sum_hours = {}
-midnight_timestamp_ms = [0]*DAYS
+joules_sum_days = [0]*DAYS
+joules_sum_hours = [0]*HOURS
+pump_on_ms_days = [0]*DAYS
+pump_on_ms_hours = [0]*HOURS
+day_timestamp_ms = [0]*DAYS
 hour_timestamp_ms = [0]*HOURS
 
-# Get last N days, including today (0)
+# Get timestamps of last N days, including today (0)
 for day in range(DAYS):
 	now = datetime.datetime.now()
 	midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
 	adjusted_midnight = midnight - datetime.timedelta(days=day)
-	midnight_timestamp_ms[day] = time.mktime(adjusted_midnight.timetuple())*1000
-	joules_sum_days[day] = 0
+	day_timestamp_ms[day] = time.mktime(adjusted_midnight.timetuple())*1000
 
-# Get last N hours
+# Get timestamps of last N hours
 for hour in range(HOURS):
 	now = datetime.datetime.now()
 	top_of_hour = now.replace(minute=0, second=0, microsecond=0)
-	adjusted_hour = top_of_hour - datetime.timedelta(hours=hour)
-	hour_timestamp_ms[hour] = time.mktime(adjusted_hour.timetuple())*1000
-	joules_sum_hours[hour] = 0
+	adjusted_top_of_hour = top_of_hour - datetime.timedelta(hours=hour)
+	hour_timestamp_ms[hour] = time.mktime(adjusted_top_of_hour.timetuple())*1000
 
-
+# Compute the joules and pump on time per timeslice
 for idx,f in enumerate(log[:-2]):
 	t = int(f[0])
 	watts = int(f[1])
@@ -56,23 +56,27 @@ for idx,f in enumerate(log[:-2]):
 	joules = watts * (ms_length/1000.0)
 
 	for day in range(DAYS):
-		if((day == 0 and t>midnight_timestamp_ms[0]) or (day!=0 and t>midnight_timestamp_ms[day] and t<midnight_timestamp_ms[day-1])):
-			joules_sum_days[day] = joules_sum_days.get(day, 0) + joules
+		if((day == 0 and t>day_timestamp_ms[0]) or (day!=0 and t>day_timestamp_ms[day] and t<day_timestamp_ms[day-1])):
+			joules_sum_days[day] += joules
+			if watts>0: pump_on_ms_days[day] += ms_length
 
 	for hour in range(HOURS):
 		if((hour == 0 and t>hour_timestamp_ms[0]) or (hour!=0 and t>hour_timestamp_ms[hour] and t<hour_timestamp_ms[hour-1])):
-			joules_sum_hours[hour] = joules_sum_hours.get(hour, 0) + joules
+			joules_sum_hours[hour] += joules
+			if watts>0: pump_on_ms_hours[hour] += ms_length
 
-
-print("hours_ago,kwh,wh")
+# Make CSV-like output
+print("hours_ago,kwh,pump_on_minutes")
 for hour in range(HOURS):
 	kwh = joules_sum_hours[hour]/JOULES_PER_KWH
-	print("%d,%f,%d" % (hour, kwh, kwh*1000.0))
+	pump_on_minutes = (pump_on_ms_hours[hour]/1000.0)/60.0
+	print("%d,%f,%f" % (hour, kwh,pump_on_minutes))
 
-print("days_ago,kwh,wh")
+print("days_ago,kwh,pump_on_minutes")
 for day in range(DAYS):
 	kwh = joules_sum_days[day]/JOULES_PER_KWH
-	print("%d,%f,%d" % (day, kwh, kwh*1000.0))
+	pump_on_minutes = (pump_on_ms_days[day]/1000.0)/60.0
+	print("%d,%f,%f" % (day, kwh, pump_on_minutes))
 
 
 
