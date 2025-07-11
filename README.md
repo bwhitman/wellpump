@@ -9,20 +9,21 @@ The [well controller has a RS485 connection](https://www.pentair.com/content/dam
 
 ## Hardware setup
 
-You have to have some way to convert RS485 to a form your MCU or computer can read. 
+You have to have some way to convert RS485 to a form your MCU or computer can read. The [SP3485](https://www.maxlinear.com/ds/sp3485.pdf) chip can help you convert from RS485 signal to a serial UART for your MCU or computer. 
 
-I at first wasted a lot of time trying to get a simpler [Sparkfun RS485 to serial breakout](https://www.sparkfun.com/sparkfun-transceiver-breakout-rs-485.html) working. That breakout uses a [SP3485](https://www.maxlinear.com/ds/sp3485.pdf
-) chip. The problem with this chip is that it's half duplex -- you have to signal which direction you're reading / writing. This gets messy: on a Pi you have to set up the [RTS flow control](https://ethertubes.com/raspberry-pi-rts-cts-flow-control/
-) and make a change to [the Python module that reads the serial port](https://github.com/pyhys/minimalmodbus/issues/137#issuecomment-2685900902
-). On an MCU you'd have to set up some GPIO to toggle between read and write. I did eventually get this setup reading bytes, but had to mess with the timing of modbus responses, and it was very brittle. I do not recommend. 
+However, the RS485 (and thus the SP3485 on its own) [requires you to manage the direction of data manually.](https://www.seeedstudio.com/blog/2021/03/18/how-rs485-works-and-how-to-implement-rs485-into-industrial-control-systems/?srsltid=AfmBOopJcMqfHdq60BRMlKcLVJ6-GwC6fiv8oTCRtwjsQJ0RMf476MUE) I at first wasted a lot of time trying to get the simple [Sparkfun RS485 to serial breakout](https://www.sparkfun.com/sparkfun-transceiver-breakout-rs-485.html) working. You have to signal from your UART which direction -- reading or writing -- before each packet. This gets messy: on a Pi you have to wire RTS to a GPIO pin and then set up the [RTS flow control](https://ethertubes.com/raspberry-pi-rts-cts-flow-control/
+) and lastly make a change to [the Python module that reads the serial port](https://github.com/pyhys/minimalmodbus/issues/137#issuecomment-2685900902
+). On an MCU you'd have to set up a GPIO to toggle between read and write. I did eventually get this setup reading bytes, but had to mess with the timing of modbus responses, and it was very brittle. I do not recommend. 
 
-Instead, I went simple and just used a Raspberry Pi and a [Waveshare USB to RS485 adapter.](https://www.waveshare.com/usb-to-rs485.htm) 
+Instead, I went simple and just used a Raspberry Pi and a [Waveshare USB to RS485 adapter.](https://www.waveshare.com/usb-to-rs485.htm) This adapter also uses the SP3485 but they have their own microcontroller that manages data direction from the UART. This makes it a lot easier to read and write RS485 data over a computer's (or Raspberry Pi etc) USB port. 
 
 Wire the `A+` from the adapter to the `P` line on the well controller, and `B-` to `N`. I skipped connecting `GND` - I presume you could use the chassis. I stripped two jumper wires (with an inch of length) and there's a plastic wire gripper on the well end. Seems stable. There's space on the bottom of the well controller for a Pi, it can close pretty neatly. A pro move would be to power the Pi from something inside the controller, but I left a USB C cable dangle through the access jack on the bottom.
 
 Plug the adapter into the Pi's USB port.
 
 ## Software setup
+
+The Pentek pump controller uses [Modbus](https://en.wikipedia.org/wiki/Modbus) over RS485, at 19200 baud, accessible through two pins (`P` and `N`) on the external accessory rail. You can pull off the cover of the controller and you'll find the row of pins at the bottom. 
 
 Set up the Pi like normal. Install [minimalmodbus](https://minimalmodbus.readthedocs.io/en/stable/readme.html
 ) like `pip3 install minimalmodbus`. [Run this script](https://github.com/bwhitman/wellpump/blob/main/well.py) like `python3 well.py`. (I run mine in a `screen` and just keep it running all the time.) It will output a log file with a timestamp in milliseconds and the power of the pump in watts. 
