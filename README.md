@@ -2,7 +2,7 @@
 
 We have a well, and during a retrofit to a whole-home backup battery, I wanted to know how much power the well was taking. 
 
-The well has a controller with a screen but would only show instantaneous watts, and you had to be looking at the controller. I wanted to measure KW/h over time periods to size a battery setup.
+The well has a controller with a screen but would only show instantaneous watts, and you had to be looking at the controller. I wanted to measure kWh over time periods to size a battery setup.
 
 The [well controller has a RS485 connection](https://www.pentair.com/content/dam/extranet/web/nam/pentek/manuals/pn957-pentek-intellidrive-pid-iom.pdf
 ). I hadn't ever done anything with RS485 so I tried to wire up something to log the power use at intervals. It was harder than I thought it would be, so I'm writing down my work here, to save the trouble of someone else in my same boat one day!
@@ -28,7 +28,9 @@ Plug the adapter into the Pi's USB port.
 Set up the Pi like normal. Install [minimalmodbus](https://minimalmodbus.readthedocs.io/en/stable/readme.html
 ) like `pip3 install minimalmodbus`. [Run this script](https://github.com/bwhitman/wellpump/blob/main/well.py) like `python3 well.py`. (I run mine in a `screen` and just keep it running all the time.) It will output a log file with a timestamp in milliseconds and the power of the pump in watts. 
 
-To see KW/H over hours or days, run [`python3 analyze.py`](https://github.com/bwhitman/wellpump/blob/main/analyze.py). It's a simple script to convert the watts per timeslice from the log to joules and then KW/H. Modify that to your needs!
+To see kWh over hours or days, run [`python3 analyze.py`](https://github.com/bwhitman/wellpump/blob/main/analyze.py). It's a simple script to convert the watts per timeslice from the log to joules and then KW/H. Modify that to your needs!
+
+We can also estimate gallons from kWh: we waited for the pump to report 0 watts, then flushed a toilet with a known fill size and divined gallons per kWh. This is a bit hand-wavy but for our use is generally on target. 
 
 ## Links, help
 
